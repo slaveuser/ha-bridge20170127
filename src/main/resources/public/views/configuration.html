@@ -1,0 +1,144 @@
+
+<ul class="nav nav-pills" role="tablist">
+	<li role="presentation" class="active"><a href="#!/">Bridge
+			Devices</a></li>
+	<li role="presentation"><a href="#!/system">Bridge Control</a></li>
+	<li role="presentation"><a href="#!/logs">Logs</a></li>
+	<li ng-if="bridge.showVera" role="presentation"><a
+		href="#!/veradevices">Vera Devices</a></li>
+	<li ng-if="bridge.showVera" role="presentation"><a
+		href="#!/verascenes">Vera Scenes</a></li>
+	<li ng-if="bridge.showHarmony" role="presentation"><a
+		href="#!/harmonyactivities">Harmony Activities</a></li>
+	<li ng-if="bridge.showHarmony" role="presentation"><a
+		href="#!/harmonydevices">Harmony Devices</a></li>
+	<li ng-if="bridge.showNest" role="presentation"><a href="#!/nest">Nest</a></li>
+	<li ng-if="bridge.showHue" role="presentation"><a
+		href="#!/huedevices">Hue Devices</a></li>
+	<li ng-if="bridge.showHal" role="presentation"><a
+		href="#!/haldevices">HAL Devices</a></li>
+	<li ng-if="bridge.showMqtt" role="presentation"><a href="#!/mqttmessages">MQTT Messages</a></li>
+	<li ng-if="bridge.showHass" role="presentation"><a href="#!/hassdevices">HomeAssistant Devices</a></li>
+	<li ng-if="bridge.showDomoticz" role="presentation"><a href="#!/domoticzdevices">Domoticz Devices</a></li>
+	<li role="presentation"><a href="#!/editdevice">Add/Edit</a></li>
+</ul>
+
+<div class="panel panel-default">
+	<div class="panel-heading">
+		<h1 class="panel-title">Current devices ({{bridge.devices.length}})</h1>
+	</div>
+	<div class="panel-body">
+
+		<p>
+			<button class="btn btn-primary" type="submit" ng-click="renumberDevices()">Renumber Devices</button>
+		</p>
+
+	<scrollable-table watch="bridge.devices">
+	<table class="table table-bordered table-striped table-hover">
+		<thead>
+			<tr>
+				<th>Row</th>
+				<th sortable-header col="id" comparator-fn="comparatorUniqueId">ID</th>
+				<th sortable-header col="name">Name</th>
+				<th sortable-header col="deviceType">Type</th>
+				<th sortable-header col="targetDevice">Target</th>
+				<th sortable-header col="inactive">Inactive</th>
+				<th sortable-header col="noState">No State</th>
+				<th>Actions</th>
+			</tr>
+		</thead>
+		<tr ng-repeat="device in bridge.devices">
+			<td>{{$index+1}}</td>
+			<td>{{device.id}}</td>
+			<td>{{device.name}}</td>
+			<td>{{device.deviceType}}</td>
+			<td>{{device.targetDevice}}</td>
+			<td>{{device.inactive}}</td>
+			<td>{{device.noState}}</td>
+			<td>
+				<p>
+					<button class="btn btn-info" type="submit"
+						ng-click="testUrl(device, 'on')">Test ON</button>
+					<button class="btn btn-info" type="submit"
+						ng-click="testUrl(device, 'dim')">Test Dim</button>
+					<button class="btn btn-info" type="submit"
+						ng-click="testUrl(device, 'off')">Test OFF</button>
+					<button class="btn btn-warning" type="submit"
+						ng-click="editDevice(device)">Edit/Copy</button>
+					<button class="btn btn-danger" type="submit"
+						ng-click="deleteDevice(device)">Delete</button>
+				</p>
+			</td>
+		</tr>
+	</table>
+	</scrollable-table>
+	</div>
+</div>
+<div class="panel panel-default">
+	<div class="panel-heading">
+		<h1 class="panel-title">
+			Bridge Device DB Backup <a ng-click="toggleBk()"><span
+				class={{imgBkUrl}} aria-hidden="true"></span></a>
+		</h1>
+	</div>
+	<div ng-if="visibleBk" class="panel-body">
+		<p>Control your backups from this area. Use the default name by hitting backup or specify your own.</p>
+		<form class="form-horizontal">
+			<div class="form-group">
+				<label class="col-xs-12 col-sm-2 control-label" for="backup-name">Backup
+					File Name</label>
+
+				<div class="col-xs-8 col-sm-7">
+					<input id="backup-name" class="form-control" type="text"
+						ng-model="optionalbackupname" placeholder="Optional">
+				</div>
+				<button type="submit" class="btn btn-primary"
+					ng-click="backupDeviceDb(optionalbackupname)">Backup
+					Device DB</button>
+			</div>
+		</form>
+		<table class="table table-bordered table-striped table-hover">
+			<thead>
+				<tr>
+					<th>Filename</th>
+					<th>Actions</th>
+				</tr>
+			</thead>
+			<tr ng-repeat="backup in bridge.backups">
+				<td>{{backup}}</td>
+				<td>
+					<button class="btn btn-danger" type="submit"
+						ng-click="restoreBackup(backup)">Restore</button>
+					<button class="btn btn-warning" type="submit"
+						ng-click="deleteBackup(backup)">Delete</button>
+				</td>
+			</tr>
+		</table>
+	</div>
+</div>
+
+<script type="text/ng-template" id="valueDialog">
+		<div class="ngdialog-message">
+			<h2>Select value</h2>
+				<p>
+					    <input type="radio" ng-model="valueType" value="percentage" ng-change="changeScale()"> Percentage
+					    <input type="radio" ng-model="valueType" value="raw" ng-change="changeScale()"> Raw
+				</p>
+				<p>
+					<rzslider rz-slider-model="slider.value" rz-slider-options="slider.options"></rzslider>
+				</p>
+		</div>
+		<div class="ngdialog-buttons mt">
+			<button type="button" class="ngdialog-button ngdialog-button-primary" ng-click="setValue()">Set</button>
+		</div>
+	</script>
+<script type="text/ng-template" id="deleteDialog">
+		<div class="ngdialog-message">
+			<h2>Device to Delete?</h2>
+				<p>{{device.name}}</p>
+				<p>Are you Sure?</p>
+		</div>
+		<div class="ngdialog-buttons mt">
+			<button type="button" class="ngdialog-button ngdialog-button-error" ng-click="deleteDevice(device)">Delete</button>
+		</div>
+	</script>
